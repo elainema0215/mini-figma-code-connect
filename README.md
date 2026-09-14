@@ -5,7 +5,6 @@
 > 源码未开源。npm 仅分发编译产物（`dist/`）。问题与反馈请到 [GitHub Issues](https://github.com/elainema0215/mini-figma-code-connect/issues)。
 
 面向 Pro 档团队的轻量替代引擎：Figma 插件 + 将设计组件映射到消费方真实代码库的工作流。
-
 官方 Code Connect 与 Builder.io Design System Intelligence 均要求 Organization / Enterprise 订阅；团队当前为 Professional，相关 MCP 绑定工具不可用。本引擎在本地实现等价的「组件绑定 + 属性映射」：映射进消费方仓库、执行在 Figma 插件，不依赖云端 publish。插件沙箱无法读写本地代码，因此映射生成在沙箱外（agent / CLI）完成，再经构建打包进插件。
 
 ---

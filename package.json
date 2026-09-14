@@ -1,0 +1,75 @@
+{
+  "name": "mini-figma-code-connect",
+  "version": "0.1.2",
+  "type": "module",
+  "description": "Local Code Connect for Figma Professional — 无 Org 也能做确定性的 f(instance) → snippet。",
+  "license": "UNLICENSED",
+  "author": "elaine.ma <elaine.ma@aspendigital.co>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elainema0215/mini-figma-code-connect.git"
+  },
+  "bugs": {
+    "url": "https://github.com/elainema0215/mini-figma-code-connect/issues"
+  },
+  "homepage": "https://github.com/elainema0215/mini-figma-code-connect#readme",
+  "keywords": [
+    "figma",
+    "code-connect",
+    "figma-plugin",
+    "design-to-code",
+    "figma-mappings"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    ".claude/skills/mini-code-connect",
+    "figma-mapping.config.example.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "types": "./dist/runtime/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js"
+    },
+    "./build": "./dist/build.mjs",
+    "./generate-registry": "./dist/generate-registry.mjs",
+    "./install-skill": "./dist/install-skill.mjs",
+    "./scaffold-manifest": "./dist/scaffold-manifest.mjs",
+    "./scaffold-plugin": "./dist/scaffold-plugin.mjs"
+  },
+  "bin": {
+    "figma-mapping": "dist/figma-mapping.mjs",
+    "figma-code-connect-build": "dist/build.mjs",
+    "mini-code-connect-install-skill": "dist/install-skill.mjs",
+    "mini-code-connect-scaffold-manifest": "dist/scaffold-manifest.mjs",
+    "mini-code-connect-scaffold-plugin": "dist/scaffold-plugin.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/build-package.mjs",
+    "build:demo-plugin": "npm run build && node esbuild.config.mjs",
+    "watch": "npm run build && node esbuild.config.mjs --watch",
+    "pretypecheck": "npm run generate:registry && npm run generate:mapping-table",
+    "typecheck": "tsc --noEmit",
+    "generate:registry": "node scripts/generate-registry.mjs 'figma-mappings/**/*.figma.ts' src/runtime/registry.generated.ts",
+    "generate:mapping-table": "node -e \"import('./scripts/copy-mapping-table.mjs').then(m => m.copyMappingTable({ cwd: process.cwd(), mappingTablePath: 'figma-mapping-table.json', outFile: 'src/main/mapping-table.generated.json' }))\"",
+    "demo": "esbuild src/dev/demo.ts --bundle --platform=node --format=esm --outfile=dist/demo.mjs --log-level=warning && node dist/demo.mjs",
+    "preexport": "npm run generate:registry",
+    "export": "esbuild src/dev/export.ts --bundle --platform=node --format=esm --outfile=dist/export.mjs --log-level=warning && node dist/export.mjs",
+    "sync:public": "npm run build && node scripts/sync-public.mjs",
+    "release:public": "node scripts/release-public.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.109.0",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.10.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "_comment": "复制这份文件到你自己项目的根目录，改名 figma-mapping.config.json，改成真实的组件目录。内容都是项目内相对路径，可以直接提交 git —— 不用像绝对路径那样每人一份本地覆盖。",
+  "codeConnect": {
+    "paths": {
+      "components": "components"
+    },
+    "importPaths": {
+      "components/*": "@/components/*"
+    }
+  }
+}

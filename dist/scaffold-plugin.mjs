@@ -12,10 +12,16 @@ import path2 from "node:path";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-function isCliEntrypoint(importMetaUrl) {
+function isCliEntrypoint(importMetaUrl, entryName) {
   if (!process.argv[1]) return false;
   try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(importMetaUrl));
+    const argvPath = realpathSync(process.argv[1]);
+    const metaPath = realpathSync(fileURLToPath(importMetaUrl));
+    if (argvPath !== metaPath) return false;
+    if (entryName) {
+      return path.basename(argvPath).includes(entryName);
+    }
+    return true;
   } catch {
     return false;
   }
@@ -71,7 +77,7 @@ function installSkill({ cwd, root, force = false, claudeMirror = true }) {
   }
   return { results, root: base };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "install-skill")) {
   const args = process.argv.slice(2);
   const force = args.includes("--force");
   const noClaudeMirror = args.includes("--no-claude-mirror");
@@ -88,7 +94,7 @@ if (isCliEntrypoint(import.meta.url)) {
 // scripts/scaffold-manifest.mjs
 import fs2 from "node:fs";
 import path3 from "node:path";
-function scaffoldManifest({ cwd, name = "Mini Code Connect", id, outDir = "dist" }) {
+function scaffoldManifest({ cwd, name = "Mini Code Connect", id, outDir = "dist", force = false }) {
   if (!id) throw new Error("scaffoldManifest: id \u5FC5\u586B");
   const panel = {
     name,
@@ -119,7 +125,7 @@ function scaffoldManifest({ cwd, name = "Mini Code Connect", id, outDir = "dist"
     ["manifest.codegen.json", codegen]
   ]) {
     const target = path3.join(cwd, file);
-    if (fs2.existsSync(target)) {
+    if (fs2.existsSync(target) && !force) {
       results.push({ target, skipped: true });
       continue;
     }
@@ -128,7 +134,7 @@ function scaffoldManifest({ cwd, name = "Mini Code Connect", id, outDir = "dist"
   }
   return { results };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "scaffold-manifest")) {
   const args = process.argv.slice(2);
   const get = (flag) => {
     const i = args.indexOf(flag);
@@ -138,10 +144,18 @@ if (isCliEntrypoint(import.meta.url)) {
   const id = get("--id");
   const outDir = get("--out") ?? "dist";
   if (!id) {
-    console.error('\u7528\u6CD5: node scripts/scaffold-manifest.mjs --id <manifest-id> [--name "<\u9762\u677F\u663E\u793A\u540D>"] [--out dist]');
+    console.error(
+      '\u7528\u6CD5: node scripts/scaffold-manifest.mjs --id <manifest-id> [--name "<\u9762\u677F\u663E\u793A\u540D>"] [--out dist] [--force]'
+    );
     process.exit(1);
   }
-  const { results } = scaffoldManifest({ cwd: process.cwd(), name, id, outDir });
+  const { results } = scaffoldManifest({
+    cwd: process.cwd(),
+    name,
+    id,
+    outDir,
+    force: args.includes("--force")
+  });
   for (const r of results) {
     console.log(r.skipped ? `[scaffold-manifest] \u5DF2\u5B58\u5728\uFF0C\u8DF3\u8FC7\uFF1A${r.target}` : `[scaffold-manifest] \u5DF2\u5199\u5165\uFF1A${r.target}`);
   }
@@ -206,7 +220,7 @@ function generateRegistry({ cwd, mappingsGlob, outFile, typesImport = "./types" 
   fs3.writeFileSync(outFile, body);
   return { count: files.length, files };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "generate-registry")) {
   const [, , mappingsGlob, outFile] = process.argv;
   if (!mappingsGlob || !outFile) {
     console.error("\u7528\u6CD5: node scripts/generate-registry.mjs <mappingsGlob> <outFile>");
@@ -321,7 +335,7 @@ async function buildPlugin({
   await esbuild.build(uiOpts);
   return { watching: false };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "build")) {
   const args = process.argv.slice(2);
   const watch = args.includes("--watch");
   const outIdx = args.indexOf("--out");
@@ -363,7 +377,7 @@ async function scaffoldPlugin({
     fs5.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
     steps.push({ step: "config", target: configPath, skipped: false });
   }
-  const manifest = scaffoldManifest({ cwd, name, id, outDir });
+  const manifest = scaffoldManifest({ cwd, name, id, outDir, force });
   steps.push({ step: "manifest", ...manifest });
   const buildScriptPath = path7.join(cwd, "scripts/build-figma-plugin.mjs");
   if (fs5.existsSync(buildScriptPath) && !force) {
@@ -420,7 +434,7 @@ ${ignoreEntry}
   steps.push({ step: "build", target: path7.join(cwd, outDir), skipped: false });
   return { steps };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "scaffold-plugin")) {
   const args = process.argv.slice(2);
   const get = (flag, fallback) => {
     const i = args.indexOf(flag);

@@ -29,6 +29,8 @@ export type PropertyDef = {
     type: FigmaPropertyType;
     variantOptions?: string[];
     defaultValue?: string | boolean;
+    /** 当前选中实例上该属性的可读取值（INSTANCE_SWAP 为子实例名等），仅面板展示用 */
+    currentLabel?: string;
 };
 /** Step 3 的产出：组件的属性 schema —— 映射的「左手边」 */
 export type ComponentSchema = {

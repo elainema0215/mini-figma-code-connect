@@ -8,10 +8,16 @@ import path2 from "node:path";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-function isCliEntrypoint(importMetaUrl) {
+function isCliEntrypoint(importMetaUrl, entryName) {
   if (!process.argv[1]) return false;
   try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(importMetaUrl));
+    const argvPath = realpathSync(process.argv[1]);
+    const metaPath = realpathSync(fileURLToPath(importMetaUrl));
+    if (argvPath !== metaPath) return false;
+    if (entryName) {
+      return path.basename(argvPath).includes(entryName);
+    }
+    return true;
   } catch {
     return false;
   }
@@ -67,7 +73,7 @@ function installSkill({ cwd, root, force = false, claudeMirror = true }) {
   }
   return { results, root: base };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "install-skill")) {
   const args = process.argv.slice(2);
   const force = args.includes("--force");
   const noClaudeMirror = args.includes("--no-claude-mirror");

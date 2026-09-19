@@ -1,14 +1,21 @@
 // scripts/generate-registry.mjs
 import fs from "node:fs";
-import path from "node:path";
+import path2 from "node:path";
 
 // scripts/is-cli-entrypoint.mjs
 import { existsSync, readFileSync, realpathSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-function isCliEntrypoint(importMetaUrl) {
+function isCliEntrypoint(importMetaUrl, entryName) {
   if (!process.argv[1]) return false;
   try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(importMetaUrl));
+    const argvPath = realpathSync(process.argv[1]);
+    const metaPath = realpathSync(fileURLToPath(importMetaUrl));
+    if (argvPath !== metaPath) return false;
+    if (entryName) {
+      return path.basename(argvPath).includes(entryName);
+    }
+    return true;
   } catch {
     return false;
   }
@@ -28,7 +35,7 @@ function findFigmaFiles(dir, recursive) {
     if (!fs.existsSync(d)) return;
     for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
       if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
-      const full = path.join(d, entry.name);
+      const full = path2.join(d, entry.name);
       if (entry.isDirectory()) {
         if (recursive) walk(full);
       } else if (entry.name.endsWith(".figma.ts")) {
@@ -40,19 +47,19 @@ function findFigmaFiles(dir, recursive) {
   return results.sort();
 }
 function identifierFor(filePath, index) {
-  const base = path.basename(filePath).replace(/\.figma\.ts$/, "").replace(/[^a-zA-Z0-9]/g, "");
+  const base = path2.basename(filePath).replace(/\.figma\.ts$/, "").replace(/[^a-zA-Z0-9]/g, "");
   const safe = base && /^[a-zA-Z_]/.test(base) ? base : `M${base}`;
   return `${safe || "Mapping"}_${index}`;
 }
 function generateRegistry({ cwd, mappingsGlob, outFile, typesImport = "./types" }) {
   const { dir, recursive } = parseGlob(mappingsGlob);
-  const files = findFigmaFiles(path.resolve(cwd, dir), recursive);
-  const outDir = path.dirname(outFile);
+  const files = findFigmaFiles(path2.resolve(cwd, dir), recursive);
+  const outDir = path2.dirname(outFile);
   const imports = files.map((f, i) => {
     const id = identifierFor(f, i);
-    let rel = path.relative(outDir, f).replace(/\.ts$/, "");
+    let rel = path2.relative(outDir, f).replace(/\.ts$/, "");
     if (!rel.startsWith(".")) rel = `./${rel}`;
-    rel = rel.split(path.sep).join("/");
+    rel = rel.split(path2.sep).join("/");
     return { id, importPath: rel };
   });
   const typeLine = typesImport == null ? "" : `import type { Template } from '${typesImport}'
@@ -65,13 +72,13 @@ function generateRegistry({ cwd, mappingsGlob, outFile, typesImport = "./types" 
   fs.writeFileSync(outFile, body);
   return { count: files.length, files };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "generate-registry")) {
   const [, , mappingsGlob, outFile] = process.argv;
   if (!mappingsGlob || !outFile) {
     console.error("\u7528\u6CD5: node scripts/generate-registry.mjs <mappingsGlob> <outFile>");
     process.exit(1);
   }
-  const result = generateRegistry({ cwd: process.cwd(), mappingsGlob, outFile: path.resolve(outFile) });
+  const result = generateRegistry({ cwd: process.cwd(), mappingsGlob, outFile: path2.resolve(outFile) });
   console.log(`[generate-registry] \u5199\u5165 ${result.count} \u6761\u6620\u5C04\u5230 ${outFile}`);
 }
 export {

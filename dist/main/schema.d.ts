@@ -7,3 +7,8 @@ import type { ComponentSchema } from '../runtime/types';
 export declare function definitionOwner(main: ComponentNode): ComponentNode | ComponentSetNode;
 /** Step 3：组件 → 属性 schema */
 export declare function extractSchema(main: ComponentNode): Promise<ComponentSchema>;
+/**
+ * 把当前实例上的可读取值写进 schema（面板「取值」列用）。
+ * INSTANCE_SWAP 解析为绑定该属性的子实例图层名；其余类型直接用 property value。
+ */
+export declare function withCurrentLabels(schema: ComponentSchema, node: InstanceNode): ComponentSchema;

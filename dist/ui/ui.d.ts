@@ -7,6 +7,7 @@ type PropertyDef = {
     name: string;
     type: string;
     variantOptions?: string[];
+    currentLabel?: string;
 };
 type Schema = {
     componentId: string;
@@ -76,6 +77,8 @@ declare const body: HTMLElement;
 declare const send: (type: string, extra?: Record<string, unknown>) => void;
 declare const esc: (s: string) => string;
 declare function schemaTable(schema: Schema, calls: AccessorCall[]): string;
+/** 按属性类型展示「选项 / 当前值」：VARIANT 列选项；INSTANCE_SWAP 列当前子实例名 */
+declare function valueCell(p: PropertyDef): string;
 declare function backBar(candidates?: Candidate[]): string;
 declare function wireBack(): void;
 declare const exportSchemaBtn: HTMLButtonElement;

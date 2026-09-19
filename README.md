@@ -2,10 +2,11 @@
 
 **Local Code Connect for Figma Professional** — 无 Org / Enterprise 也能做确定性的 `f(instance) → snippet`。
 
-> 源码未开源。npm 仅分发编译产物（`dist/`）。问题与反馈请到 [GitHub Issues](https://github.com/elainema0215/mini-figma-code-connect/issues)。
-
 面向 Pro 档团队的轻量替代引擎：Figma 插件 + 将设计组件映射到消费方真实代码库的工作流。
 官方 Code Connect 与 Builder.io Design System Intelligence 均要求 Organization / Enterprise 订阅；团队当前为 Professional，相关 MCP 绑定工具不可用。本引擎在本地实现等价的「组件绑定 + 属性映射」：映射进消费方仓库、执行在 Figma 插件，不依赖云端 publish。插件沙箱无法读写本地代码，因此映射生成在沙箱外（agent / CLI）完成，再经构建打包进插件。
+
+
+> 问题与反馈 → [GitHub Issues](https://github.com/elainema0215/mini-figma-code-connect/issues)。好用就 [⭐](https://github.com/elainema0215/mini-figma-code-connect)。
 
 ---
 
@@ -15,16 +16,15 @@
 
 | | 官方 Code Connect | 本实现 |
 |---|---|---|
-| 订阅计划要求 | Organization / Enterprise，需 Full 或 Dev 席位 | 无要求，任意计划均可运行 |
-| 模板存储位置 | 发布至 Figma 服务端（CLI `publish` 或 MCP `add_code_connect_map`） | 构建时打包进插件 |
-| 模板执行方 | Figma 侧沙箱，在 Dev Mode / MCP 读取时执行 | 插件主线程，选中实例时执行 |
-| 模板入口 | 模块顶层 `const instance = figma.selectedInstance` | `render(instance)` 函数参数 |
-| 三行绑定注释 | 构建时解析 `// url= // source= // component=` | 保留注释供人工阅读，同时在 `meta` 字段中显式声明 |
-| 组件发布状态要求 | 必须已发布 | 不要求，未发布时退回按组件名匹配 |
-| SLOT 属性 | 支持 `getSlot()` | 未实现，仅支持 TEXT / BOOLEAN / VARIANT / INSTANCE_SWAP |
-| 多框架支持 | 通过 `label` 枚举，单一设计组件可挂载多条并行映射 | 仅支持 React 一条 |
-| 穷举校验 | 不提供，缺值静默 | 提供，`validate()` 自动对账 |
-| 绑定关系判定方 | Figma 服务端存储的映射，或人工在 Code Connect UI 中手动指定 | agent 现场读取代码判断（mini-code-connect skill），或本地正则打分兜底 |
+| 订阅计划 | Organization / Enterprise（Full 或 Dev 席位） | 任意计划 |
+| 模板存储 | 发布至 Figma 服务端 | 构建时打包进插件 |
+| 模板执行 | Figma 沙箱（Dev Mode / MCP） | 插件主线程，选中实例时执行 |
+| 模板入口 | 顶层 `figma.selectedInstance` | `render(instance)` 参数 |
+| 组件发布 | 必须已发布 | 未发布可按组件名匹配 |
+| SLOT | 支持 `getSlot()` | 仅 TEXT / BOOLEAN / VARIANT / INSTANCE_SWAP |
+| 多框架 | `label` 多映射并行 | 仅 React 一条 |
+| 穷举校验 | 缺值静默 | `validate()` 自动对账 |
+| 绑定判定 | 服务端映射或 Code Connect UI 手选 | agent 读代码（skill）+ 人工 review，或本地正则打分兜底 |
 
 ---
 
@@ -33,13 +33,9 @@
 - **尚未接入基于 REST API 与 Personal Access Token 的 schema 拉取能力**。该方案理论可行（通用 Figma REST API 不受 Code Connect 订阅限制），但目前唯一的数据来源仍是插件手动导出的 schema.json。
 - **不提供跨消费方的数据新鲜度检查**。某个消费方代码库更新后，此前标记为 `guessed` / `unmatched` 的映射条目是否已可补全，需人工发起新一轮映射流程，引擎本身不做追踪。
 
-> 构建时生成的 `registry.generated.ts` / `mapping-table.generated.json` 写在消费方 `outDir/.generated/`（默认 `figma-plugin-dist/.generated/`），经 esbuild 插件注入，不会改写 `node_modules` 内的包文件，多消费方可并行构建。
-
-消费方项目自身映射数据的具体缺口（未映射的组件、置信度较低的属性推断），记录于消费方 `figma-mapping-table.json` 的 `unmappedNotes` / `note` 字段中，不属于本文档的追踪范围。
-
 ---
 
-## 消费方接入
+## 消费方接入步骤
 
 面向将 `mini-figma-code-connect` 接入自身项目、并开始建立 Figma 组件映射的使用者。所有命令默认在消费方项目目录（含 `package.json` 的目录）下执行；若为 monorepo，请进入已安装该依赖的子包目录，勿在仓库根目录执行。
 
@@ -57,7 +53,7 @@ pnpm add -D mini-figma-code-connect
 # 或：npm install -D mini-figma-code-connect
 ```
 
-本地开发引擎时仍可用 `link:` / `file:` 指向仓库路径。包尚未安装时，后续 CLI 命令均不存在。
+包尚未安装时，后续 CLI 命令均不存在。
 
 #### 2. 执行一次性脚手架
 
@@ -97,7 +93,6 @@ pnpm exec mini-code-connect-scaffold-manifest --id <manifest-id>
 
 如需 Dev Mode Code 区形态，以相同方式导入 `manifest.codegen.json`（`id` 不同，为独立记录，二者可同时导入）。
 
-此时插件已可运行，但尚无真实映射数据，所有实例均显示为「未映射」。
 
 #### 5. 建立真实映射
 
@@ -128,3 +123,6 @@ pnpm exec mini-code-connect-scaffold-manifest --id <manifest-id>
    2. 完全退出并重启 Figma。
    3. 在 Development 里删掉旧插件后，重新 **Import plugin from manifest…**。  
    也可把消费方仓库挪出受保护目录（例如 `~/Projects/`）再导入。
+
+6. **Q:** `pnpm exec mini-code-connect-scaffold-plugin --id …` 报 `generate-registry: glob 里没有 *: "--id"`？  
+   **A:** `0.1.3` 打包把多个 CLI 打进同一文件，导致 `generate-registry` 误跑并把 `--id` 当成 glob。请升级到 **`>=0.1.4`** 后重试。

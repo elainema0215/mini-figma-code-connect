@@ -10,10 +10,16 @@ import path4 from "node:path";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-function isCliEntrypoint(importMetaUrl) {
+function isCliEntrypoint(importMetaUrl, entryName) {
   if (!process.argv[1]) return false;
   try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(importMetaUrl));
+    const argvPath = realpathSync(process.argv[1]);
+    const metaPath = realpathSync(fileURLToPath(importMetaUrl));
+    if (argvPath !== metaPath) return false;
+    if (entryName) {
+      return path.basename(argvPath).includes(entryName);
+    }
+    return true;
   } catch {
     return false;
   }
@@ -90,7 +96,7 @@ function generateRegistry({ cwd, mappingsGlob, outFile, typesImport = "./types" 
   fs.writeFileSync(outFile, body);
   return { count: files.length, files };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "generate-registry")) {
   const [, , mappingsGlob, outFile] = process.argv;
   if (!mappingsGlob || !outFile) {
     console.error("\u7528\u6CD5: node scripts/generate-registry.mjs <mappingsGlob> <outFile>");
@@ -205,7 +211,7 @@ async function buildPlugin({
   await esbuild.build(uiOpts);
   return { watching: false };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "build")) {
   const args = process.argv.slice(2);
   const watch = args.includes("--watch");
   const outIdx = args.indexOf("--out");

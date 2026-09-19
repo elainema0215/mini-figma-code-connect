@@ -1,6 +1,6 @@
 <div id="app">
   <header>
-    <div class="title">Simple Code Connect</div>
+    <div class="title">Mini Code Connect</div>
     <div class="header-actions">
       <button id="scan" class="ghost" type="button">扫描页面</button>
       <button id="refresh" class="ghost" type="button">重新读取</button>
@@ -26,14 +26,14 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--fg);
-    font: 10px/1.4 Inter, -apple-system, "Segoe UI", sans-serif;
+    font: 12px/1.4 Inter, -apple-system, "Segoe UI", sans-serif;
   }
   #app { display: flex; flex-direction: column; height: 100vh; }
   header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 12px; border-bottom: 1px solid var(--line); flex: none;
   }
-  .title { font-weight: 600; font-size: 12px; }
+  .title { font-weight: 600; font-size: 14px; }
   .header-actions { display: flex; gap: 6px; }
   #body { flex: 1; overflow-y: auto; padding: 12px; }
   footer {
@@ -47,7 +47,7 @@
   button.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
   button:disabled { opacity: .4; cursor: default; }
   h2 {
-    font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
     color: var(--dim); margin: 0 0 6px;
   }
   section { margin-bottom: 16px; }
@@ -56,22 +56,57 @@
   .kv { display: flex; gap: 8px; margin-bottom: 3px; }
   .kv span:first-child { color: var(--dim); min-width: 86px; flex: none; }
   .kv span:last-child { word-break: break-all; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--dim); font-weight: 500; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
-  td { font-size: 10px; }
-  code, pre { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10px; }
+  table.prop-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  table.prop-table th,
+  table.prop-table td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    word-break: break-word;
+  }
+  table.prop-table th {
+    color: var(--dim);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  table.prop-table td { font-size: 12px; }
+  table.prop-table th:nth-child(1),
+  table.prop-table td:nth-child(1) { width: 16%; }
+  table.prop-table th:nth-child(2),
+  table.prop-table td:nth-child(2) {
+    width: 26%;
+    white-space: nowrap;
+  }
+  table.prop-table th.status,
+  table.prop-table td.status {
+    width: 4.5rem;
+    min-width: 4.5rem;
+    white-space: nowrap;
+    word-break: keep-all;
+    text-align: right;
+    padding-right: 10px;
+    padding-left: 6px;
+  }
+  table.prop-table .current-val { margin-top: 2px; font-size: 11px; }
+  code, pre { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; }
   td code {
     padding: 1px 5px; border-radius: 3px; background: var(--panel);
-    color: var(--accent); font-size: 9px;
+    color: var(--accent); font-size: 11px;
   }
   pre {
     margin: 0; padding: 10px; background: var(--panel); border-radius: 6px;
     overflow-x: auto; white-space: pre;
   }
   .tag {
-    display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 10px;
-    background: var(--line); color: var(--fg);
+    display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 12px;
+    background: var(--line); color: var(--fg); white-space: nowrap;
   }
   .tag.ok { background: rgba(13,153,255,.16); color: var(--accent); }
   .tag.miss { background: rgba(217,48,37,.14); color: var(--danger); }
@@ -86,7 +121,7 @@
   .component-list { border: 1px solid var(--line); border-radius: 8px; overflow: clip; }
   .list-header {
     display: flex; justify-content: space-between; padding: 6px 10px;
-    background: var(--panel); font-size: 10px; font-weight: 600; letter-spacing: .04em;
+    background: var(--panel); font-size: 12px; font-weight: 600; letter-spacing: .04em;
     text-transform: uppercase; color: var(--dim);
   }
   ul.component-rows { list-style: none; margin: 0; padding: 0; }
@@ -99,9 +134,9 @@
     display: flex; align-items: center; gap: 6px; text-align: left; font: inherit; min-width: 0;
   }
   .component-row .row-name span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .diamond { color: var(--accent); font-size: 9px; flex: none; }
+  .diamond { color: var(--accent); font-size: 11px; flex: none; }
   .row-code { display: flex; align-items: center; gap: 5px; flex: none; white-space: nowrap; }
-  .status-dot { display: inline-flex; width: 14px; height: 14px; border-radius: 50%; align-items: center; justify-content: center; font-size: 9px; flex: none; }
+  .status-dot { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; align-items: center; justify-content: center; font-size: 11px; flex: none; }
   .status-dot.ok { background: rgba(13,153,255,.16); color: var(--accent); }
   .status-dot.miss { background: rgba(217,48,37,.14); color: var(--danger); }
   ul.findings { margin: 0; padding-left: 16px; }
@@ -109,6 +144,6 @@
   li.error { color: var(--danger); }
   li.warn { color: var(--warn); }
   .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-  .copy { font-size: 10px; padding: 2px 7px; }
+  .copy { font-size: 12px; padding: 2px 7px; }
 </style>
 <script>/*__UI_JS__*/</script>

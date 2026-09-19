@@ -1,6 +1,6 @@
 {
   "name": "mini-figma-code-connect",
-  "version": "0.1.3",
+  "version": "0.1.7",
   "type": "module",
   "description": "Local Code Connect for Figma Professional — 无 Org 也能做确定性的 f(instance) → snippet。",
   "license": "UNLICENSED",

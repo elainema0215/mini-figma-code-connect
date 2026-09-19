@@ -2,7 +2,7 @@
 
 // scripts/figma-mapping/index.mjs
 import fs4 from "node:fs";
-import path4 from "node:path";
+import path5 from "node:path";
 import readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 
@@ -215,19 +215,26 @@ function toImportSpecifier(relPath, importPaths) {
 
 // scripts/figma-mapping/registry.mjs
 import fs3 from "node:fs";
-import path3 from "node:path";
+import path4 from "node:path";
 
 // scripts/generate-registry.mjs
 import fs2 from "node:fs";
-import path2 from "node:path";
+import path3 from "node:path";
 
 // scripts/is-cli-entrypoint.mjs
 import { existsSync, readFileSync, realpathSync } from "node:fs";
+import path2 from "node:path";
 import { fileURLToPath } from "node:url";
-function isCliEntrypoint(importMetaUrl) {
+function isCliEntrypoint(importMetaUrl, entryName) {
   if (!process.argv[1]) return false;
   try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(importMetaUrl));
+    const argvPath = realpathSync(process.argv[1]);
+    const metaPath = realpathSync(fileURLToPath(importMetaUrl));
+    if (argvPath !== metaPath) return false;
+    if (entryName) {
+      return path2.basename(argvPath).includes(entryName);
+    }
+    return true;
   } catch {
     return false;
   }
@@ -247,7 +254,7 @@ function findFigmaFiles(dir, recursive) {
     if (!fs2.existsSync(d)) return;
     for (const entry of fs2.readdirSync(d, { withFileTypes: true })) {
       if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
-      const full = path2.join(d, entry.name);
+      const full = path3.join(d, entry.name);
       if (entry.isDirectory()) {
         if (recursive) walk(full);
       } else if (entry.name.endsWith(".figma.ts")) {
@@ -259,19 +266,19 @@ function findFigmaFiles(dir, recursive) {
   return results.sort();
 }
 function identifierFor(filePath, index) {
-  const base = path2.basename(filePath).replace(/\.figma\.ts$/, "").replace(/[^a-zA-Z0-9]/g, "");
+  const base = path3.basename(filePath).replace(/\.figma\.ts$/, "").replace(/[^a-zA-Z0-9]/g, "");
   const safe = base && /^[a-zA-Z_]/.test(base) ? base : `M${base}`;
   return `${safe || "Mapping"}_${index}`;
 }
 function generateRegistry({ cwd, mappingsGlob, outFile, typesImport = "./types" }) {
   const { dir, recursive } = parseGlob(mappingsGlob);
-  const files = findFigmaFiles(path2.resolve(cwd, dir), recursive);
-  const outDir = path2.dirname(outFile);
+  const files = findFigmaFiles(path3.resolve(cwd, dir), recursive);
+  const outDir = path3.dirname(outFile);
   const imports = files.map((f, i) => {
     const id = identifierFor(f, i);
-    let rel = path2.relative(outDir, f).replace(/\.ts$/, "");
+    let rel = path3.relative(outDir, f).replace(/\.ts$/, "");
     if (!rel.startsWith(".")) rel = `./${rel}`;
-    rel = rel.split(path2.sep).join("/");
+    rel = rel.split(path3.sep).join("/");
     return { id, importPath: rel };
   });
   const typeLine = typesImport == null ? "" : `import type { Template } from '${typesImport}'
@@ -284,13 +291,13 @@ function generateRegistry({ cwd, mappingsGlob, outFile, typesImport = "./types" 
   fs2.writeFileSync(outFile, body);
   return { count: files.length, files };
 }
-if (isCliEntrypoint(import.meta.url)) {
+if (isCliEntrypoint(import.meta.url, "generate-registry")) {
   const [, , mappingsGlob, outFile] = process.argv;
   if (!mappingsGlob || !outFile) {
     console.error("\u7528\u6CD5: node scripts/generate-registry.mjs <mappingsGlob> <outFile>");
     process.exit(1);
   }
-  const result = generateRegistry({ cwd: process.cwd(), mappingsGlob, outFile: path2.resolve(outFile) });
+  const result = generateRegistry({ cwd: process.cwd(), mappingsGlob, outFile: path3.resolve(outFile) });
   console.log(`[generate-registry] \u5199\u5165 ${result.count} \u6761\u6620\u5C04\u5230 ${outFile}`);
 }
 
@@ -298,9 +305,9 @@ if (isCliEntrypoint(import.meta.url)) {
 function refreshRegistry({
   cwd,
   mappingsGlob = "figma-mappings/**/*.figma.ts",
-  outFile = path3.join(cwd, "figma-plugin-dist/.generated/registry.generated.ts")
+  outFile = path4.join(cwd, "figma-plugin-dist/.generated/registry.generated.ts")
 }) {
-  fs3.mkdirSync(path3.dirname(outFile), { recursive: true });
+  fs3.mkdirSync(path4.dirname(outFile), { recursive: true });
   const result = generateRegistry({ cwd, mappingsGlob, outFile });
   return { count: result.count };
 }
@@ -515,11 +522,11 @@ async function pickLoop(schema, ranked, allFiles, rest, useAi) {
   if (answer === "s") return processQueue(rest, useAi);
   if (answer === "m") {
     const rel = (await ask("\u8F93\u5165\u8DEF\u5F84\uFF08\u76F8\u5BF9\u9879\u76EE\u6839\u76EE\u5F55\uFF0C\u6216\u7EDD\u5BF9\u8DEF\u5F84\uFF09: ")).trim();
-    if (!fs4.existsSync(path4.resolve(ROOT, rel))) {
+    if (!fs4.existsSync(path5.resolve(ROOT, rel))) {
       console.log("\u6587\u4EF6\u4E0D\u5B58\u5728\uFF0C\u91CD\u6765\u3002\n");
       return pickLoop(schema, ranked, allFiles, rest, useAi);
     }
-    return confirmAndGenerate(schema, path4.relative(ROOT, path4.resolve(ROOT, rel)), rest, useAi);
+    return confirmAndGenerate(schema, path5.relative(ROOT, path5.resolve(ROOT, rel)), rest, useAi);
   }
   const idx = Number(answer);
   if (Number.isInteger(idx) && idx >= 1 && idx <= top.length) {
@@ -535,7 +542,7 @@ async function pickLoop(schema, ranked, allFiles, rest, useAi) {
 }
 async function confirmAndGenerate(schema, relPath, rest, useAi) {
   const info = extractComponentInfo(relPath);
-  const componentName = info.names.find((n) => n.toLowerCase() === path4.basename(relPath, ".ts").toLowerCase()) ?? info.names[0] ?? path4.basename(relPath, ".ts");
+  const componentName = info.names.find((n) => n.toLowerCase() === path5.basename(relPath, ".ts").toLowerCase()) ?? info.names[0] ?? path5.basename(relPath, ".ts");
   console.log(`
 \u9009\u4E2D: ${relPath}`);
   console.log(`\u8BC6\u522B\u5230\u7684\u5BFC\u51FA: ${info.names.join(", ") || "\uFF08\u6CA1\u627E\u5230 export \u7684\u7EC4\u4EF6\u540D\uFF0C\u4F1A\u7528\u6587\u4EF6\u540D\u515C\u5E95\uFF09"}`);
@@ -573,11 +580,11 @@ async function confirmAndGenerate(schema, relPath, rest, useAi) {
 }
 async function writeMappingFile(schema, content, rest, useAi) {
   const safeName = schema.componentName.replace(/[^a-zA-Z0-9]+/g, "") || "Component";
-  const defaultOut = path4.relative(ROOT, path4.join(MAPPINGS_DIR, `${safeName}.figma.ts`));
+  const defaultOut = path5.relative(ROOT, path5.join(MAPPINGS_DIR, `${safeName}.figma.ts`));
   const outInput = (await ask(`\u4FDD\u5B58\u5230\u54EA [\u56DE\u8F66\u7528 "${defaultOut}"]: `)).trim();
   const outRel = outInput || defaultOut;
-  const outAbs = path4.resolve(ROOT, outRel);
-  if (!outAbs.startsWith(ROOT + path4.sep)) {
+  const outAbs = path5.resolve(ROOT, outRel);
+  if (!outAbs.startsWith(ROOT + path5.sep)) {
     console.log(`\u62D2\u7EDD\u5199\u5165\uFF1A${outAbs} \u5728\u9879\u76EE\u6839\u76EE\u5F55\u4E4B\u5916\uFF0C\u8FD9\u4E2A\u811A\u672C\u53EA\u5141\u8BB8\u5F80 ${ROOT} \u91CC\u5199\u3002\u8DF3\u8FC7\u8FD9\u4E2A\u7EC4\u4EF6\u3002
 `);
     return processQueue(rest, useAi);
@@ -589,7 +596,7 @@ async function writeMappingFile(schema, content, rest, useAi) {
       return processQueue(rest, useAi);
     }
   }
-  fs4.mkdirSync(path4.dirname(outAbs), { recursive: true });
+  fs4.mkdirSync(path5.dirname(outAbs), { recursive: true });
   fs4.writeFileSync(outAbs, content);
   console.log(`
 \u5DF2\u5199\u5165 ${outRel}`);

@@ -13,7 +13,7 @@
  *   Step 5 执行映射         —— template.render(handle)
  *   Step 6 自检             —— validate(schema, calls, probeCalls)
  */
-import { extractSchema, definitionOwner } from './schema';
+import { extractSchema, definitionOwner, withCurrentLabels } from './schema';
 import { InstanceHandle } from './handle';
 import { lookup } from '../runtime/registry';
 import { renderToString, collectErrors } from '../runtime/render';
@@ -48,7 +48,7 @@ async function analyze(node) {
     const main = await node.getMainComponentAsync();
     if (!main)
         return { ok: false, reason: '读不到主组件（可能是缺失的远端组件）' };
-    const schema = await extractSchema(main);
+    const schema = withCurrentLabels(await extractSchema(main), node);
     const template = lookup(schema.componentKey, schema.componentName);
     if (!template) {
         return {
@@ -138,12 +138,12 @@ if (figma.mode === 'codegen') {
     figma.codegen.on('generate', async ({ node }) => {
         const picked = await asInstance(node);
         if ('error' in picked) {
-            return [{ title: 'Simple Code Connect', code: `// ${picked.error}`, language: 'PLAINTEXT' }];
+            return [{ title: 'Mini Code Connect', code: `// ${picked.error}`, language: 'PLAINTEXT' }];
         }
         if ('candidates' in picked) {
             return [
                 {
-                    title: 'Simple Code Connect',
+                    title: 'Mini Code Connect',
                     code: `// 里面有 ${picked.candidates.length} 个组件实例，请单选其中一个：\n${picked.candidates
                         .map((c) => `//  - ${c.name}`)
                         .join('\n')}`,
@@ -153,7 +153,7 @@ if (figma.mode === 'codegen') {
         }
         const a = await analyze(picked);
         if (!a.ok) {
-            return [{ title: 'Simple Code Connect', code: `// ${a.reason}`, language: 'PLAINTEXT' }];
+            return [{ title: 'Mini Code Connect', code: `// ${a.reason}`, language: 'PLAINTEXT' }];
         }
         const results = [
             {

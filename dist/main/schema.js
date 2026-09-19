@@ -37,3 +37,34 @@ export async function extractSchema(main) {
         properties,
     };
 }
+/**
+ * 把当前实例上的可读取值写进 schema（面板「取值」列用）。
+ * INSTANCE_SWAP 解析为绑定该属性的子实例图层名；其余类型直接用 property value。
+ */
+export function withCurrentLabels(schema, node) {
+    const props = node.componentProperties;
+    return {
+        ...schema,
+        properties: schema.properties.map((p) => {
+            const key = Object.prototype.hasOwnProperty.call(props, p.name)
+                ? p.name
+                : Object.keys(props).find((k) => k.split('#')[0] === p.name);
+            if (key === undefined)
+                return p;
+            if (p.type === 'INSTANCE_SWAP') {
+                const hit = node.findOne((n) => {
+                    if (n.type !== 'INSTANCE')
+                        return false;
+                    const refs = n.componentPropertyReferences;
+                    return !!refs && refs.mainComponent === key;
+                });
+                return hit ? { ...p, currentLabel: hit.name } : p;
+            }
+            const value = props[key].value;
+            if (typeof value === 'string' || typeof value === 'boolean') {
+                return { ...p, currentLabel: String(value) };
+            }
+            return p;
+        }),
+    };
+}

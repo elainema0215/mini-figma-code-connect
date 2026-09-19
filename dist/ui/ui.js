@@ -9,11 +9,30 @@ function schemaTable(schema, calls) {
         const tag = consumed.has(p.name)
             ? '<span class="tag ok">已映射</span>'
             : '<span class="tag miss">未映射</span>';
-        const opts = p.variantOptions ? esc(p.variantOptions.join(' / ')) : '—';
-        return `<tr><td>${esc(p.name)}</td><td><code>${p.type}</code></td><td>${opts}</td><td>${tag}</td></tr>`;
+        return `<tr><td>${esc(p.name)}</td><td><code>${p.type}</code></td><td>${valueCell(p)}</td><td class="status">${tag}</td></tr>`;
     })
         .join('');
-    return `<table><thead><tr><th>属性</th><th>类型</th><th>可选值</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table class="prop-table"><thead><tr><th>属性</th><th>类型</th><th>取值</th><th class="status">状态</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+/** 按属性类型展示「选项 / 当前值」：VARIANT 列选项；INSTANCE_SWAP 列当前子实例名 */
+function valueCell(p) {
+    if (p.type === 'VARIANT' && p.variantOptions && p.variantOptions.length > 0) {
+        const opts = esc(p.variantOptions.join(' / '));
+        if (p.currentLabel) {
+            return `${opts}<div class="dim current-val">当前 ${esc(p.currentLabel)}</div>`;
+        }
+        return opts;
+    }
+    if (p.type === 'INSTANCE_SWAP') {
+        return p.currentLabel ? esc(p.currentLabel) : '<span class="dim">实例插槽</span>';
+    }
+    if (p.type === 'BOOLEAN') {
+        return p.currentLabel ? esc(p.currentLabel) : 'true / false';
+    }
+    if (p.type === 'TEXT') {
+        return p.currentLabel ? esc(p.currentLabel) : '<span class="dim">文本</span>';
+    }
+    return p.currentLabel ? esc(p.currentLabel) : '—';
 }
 function backBar(candidates) {
     if (!candidates || candidates.length === 0)
@@ -144,24 +163,21 @@ function render(msg) {
       <div class="kv"><span>component</span><span><code>${esc(template.meta.component)}</code></span></div>
       <div class="kv"><span>template id</span><span><code>${esc(template.id)}</code></span></div>
     </div>`;
-    const findingList = findings.length === 0
-        ? '<p class="hint">没有发现问题。</p>'
-        : `<ul class="findings">${findings
+    const findingsSection = findings.length === 0
+        ? ''
+        : `<section><h2>自检</h2><ul class="findings">${findings
             .map((f) => `<li class="${f.level}">${esc(f.text)}</li>`)
-            .join('')}</ul>`;
+            .join('')}</ul></section>`;
     const importLines = imports.length ? esc(imports.join('\n')) + '\n\n' : '';
     body.innerHTML = `
     ${backBar(msg.candidates)}
     <section><h2>绑定</h2>${bindingCard}</section>
     <section>
-      <div class="row"><h2>生成的代码片段</h2><button class="ghost copy" id="copy" type="button">复制</button></div>
+      <div class="row"><h2>组件用法</h2><button class="ghost copy" id="copy" type="button">复制</button></div>
       <pre id="snippet">${importLines}${esc(snippet)}</pre>
     </section>
     <section><h2>属性 schema 与覆盖率</h2>${schemaTable(schema, calls)}</section>
-    <section><h2>自检（Step 6）</h2>${findingList}</section>
-    <section><h2>本次 accessor 调用</h2><pre>${esc(calls
-        .map((c) => `${'  '.repeat(c.depth)}${c.method}("${c.prop}")${c.ok ? '' : `  ⚠ ${c.note ?? ''}`}`)
-        .join('\n') || '（无）')}</pre></section>`;
+    ${findingsSection}`;
     const copy = document.getElementById('copy');
     if (copy) {
         copy.addEventListener('click', () => {
